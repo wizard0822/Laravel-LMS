@@ -1,0 +1,189 @@
+@extends('layouts.sidebar')
+@section('css')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{{asset('css/quizzes/create.css')}}">
+@endsection
+@section('content')
+    @if (Session::has('success'))
+        <div class="alert alert-success">{!! Session::get('success') !!}</div>
+    @endif
+    @if (Session::has('failure'))
+        <div class="alert alert-danger">{!! Session::get('failure') !!}</div>
+    @endif
+    @if (Session::has('error'))
+        <div class="alert alert-danger">{!! Session::get('error') !!}</div>
+    @endif
+    {!! Form::open(['method' => 'PUT', 'route' => ['quizzes.update', encrypt($id)]])!!}
+    <input type="hidden" name="id" value="{{encrypt($id)}}">
+    <h3 class="page-title">@lang('module.edit'): {{ $quiz->title }}</h3>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            @lang('module.edit')
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-xs-12 form-group">
+                    {!! Form::label('title',trans('module.quizzes.fields.quiz'),['class' => 'control-label']) !!}
+                    {!! Form::text('title', $quiz->title , ['class' => 'form-control ','required']) !!}
+                    @if($errors->has('title'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('title') }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 form-group">
+                    {!! Form::label('description',Lang::get('module.description'), ['class' => 'control-label']) !!}
+                    {!! Form::textarea('description', $quiz->description , ['class' => 'form-control ','resize' => 'none','rows' => '6', 'placeholder' => $quiz->description, 'required']) !!}
+                    @if($errors->has('description'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('description') }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12 form-group">
+                    {{ Form::checkbox('solve_many',1,$quiz->solve_many == 1 ? true : '', ['class' => 'field','id' => 'solve_many']) }}
+                    {!! Form::label('solve_many',trans('module.judge_options.quiz-options.solve_many'), ['class' => 'control-label']) !!}
+                    @if($errors->has('solve_many'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('solve_many') }}
+                        </p>
+                    @endif
+                    <br>
+                    {{ Form::checkbox('share_results',1,$quiz->share_results == 1 ? true : '', ['class' => 'field','id' => 'share_results']) }}
+                    {!! Form::label('share_results',trans('module.judge_options.quiz-options.share_results'), ['class' => 'control-label']) !!}
+                    @if($errors->has('share_results'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('share_results') }}
+                        </p>
+                    @endif
+                    <br>
+                    {{ Form::checkbox('results_details_w_respect_t_time',1,$quiz->results_details_w_respect_t_time == 1 ? true : '', ['class' => 'field','id' => 'results_details_w_respect_t_time']) }}
+                    {!! Form::label('results_details_w_respect_t_time',trans('module.judge_options.quiz-options.results_details_w_respect_t_time'), ['class' => 'control-label']) !!}
+                    @if($errors->has('results_details_w_respect_t_time'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('results_details_w_respect_t_time') }}
+                        </p>
+                    @endif
+                    <br>
+                    {{ Form::checkbox('activate_plagiarism',1,$quiz->activate_plagiarism == 1 ? true : '',['class' => 'field','onchange' => 'active_percentage()' ,'id' => 'activate_plagiarism']) }}
+                    {!! Form::label('activate_plagiarism',trans('module.judge_options.quiz-options.activate_plagiarism'), ['class' => 'control-label']) !!}
+                    @if($errors->has('activate_plagiarism'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('activate_plagiarism') }}
+                        </p>
+                    @endif
+                    <br>
+                    <div id="Percentage">
+                        {!! Form::label('percentage' ,trans('module.quizzes.percentage'), ['class' => 'control-label'])!!}
+                        <div class="form-group">
+                            {{ Form::checkbox('share_plagiarism',1,$quiz->share_plagiarism == 1 ? true : '', ['class' => 'field','id' => 'share_plagiarism']) }}
+                            {!! Form::label('share_plagiarism',trans('module.judge_options.quiz-options.share_plagiarism'), ['class' => 'control-label']) !!}
+
+                            <div class="range-slider">
+                                <input class="range-slider__range" type="range" min="0" max="100"
+                                       value="{{$quiz->plagiarism_percentage}}"
+                                       name="plagiarism_percentage" id="plagiarism_percentage">
+                                <span class="range-slider__value">{{$quiz->plagiarism_percentage}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    @if($errors->has('plagiarism_percentage'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('plagiarism_percentage') }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 form-group">
+                    {!! Form::label('duration',trans('module.quizzes.fields.duration'), ['class' => 'control-label']) !!}
+                    <div class='input-group time timepicker'>
+                        {!! Form::text('duration', $quiz->duration , ['class' => 'form-control ','placeholder' => $quiz->duration,'type' => 'text']) !!}
+                        <span class="input-group-addon" style="cursor: pointer;" readonly="true">
+                            <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        </span>
+                        @if($errors->has('duration'))
+                            <p class="help-block alert-danger">
+                                {{ $errors->first('duration') }}
+                            </p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            {!! Form::label('start_date',trans('module.quizzes.fields.start-date') . ' ' .'(' . trans('module.current'). ' ' .$quiz->start_date . ')', ['class' => 'control-label']) !!}
+            <div class="row">
+                <div class="col-xs-12 form-group">
+                    <div class='input-group date' id='datetimepicker3'>
+                        {!! Form::input('text','start_date', $quiz->start_date , ['class' => 'form-control ', 'placeholder' => $quiz->start_date,'type' => 'text','required']) !!}
+                        <span class="input-group-addon">
+           					<i class="fa fa-calendar" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    @if($errors->has('start_date'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('start_date') }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+            {!! Form::label('end_date',trans('module.quizzes.fields.end-date')  . ' ' .'(' . trans('module.current'). ' ' .$quiz->end_date . ')', ['class' => 'control-label']) !!}
+            <div class="row">
+                <div class="col-xs-12 form-group">
+                    <div class='input-group date' id='datetimepicker4'>
+                        {!! Form::input('text','end_date', $quiz->end_date, ['class' => 'form-control ', 'placeholder' => $quiz->end_date,'type' => 'text','required']) !!}
+                        <span class="input-group-addon">
+                             <i class="fa fa-calendar" aria-hidden="true"></i>
+                        </span>
+                    </div>
+
+                    @if($errors->has('end_date'))
+                        <p class="help-block alert-danger">
+                            {{ $errors->first('end_date') }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+            {!! Form::submit(trans('module.save'), ['class' => 'btn btn-danger' , 'onmouseover' => 'assign_date()']) !!}
+            {!! Form::close() !!}
+        </div>
+    </div>
+@endsection
+@section('javascript')
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+    <script type="text/javascript">
+
+        $('.timepicker').datetimepicker({
+
+            format: 'HH:mm:ss'
+
+        });
+
+    </script>
+    <script type="text/javascript">
+        var dateToday = new Date();
+        var lastDate = new Date(dateToday.getFullYear() + 20, 11, 31);
+
+        $(function () {
+            $('#datetimepicker3').datetimepicker({
+                format: 'YYYY-MM-DD HH:mm:ss',
+                minDate: dateToday,
+                maxDate: lastDate,
+            });
+        });
+        $(function () {
+            $('#datetimepicker4').datetimepicker({
+                format: 'YYYY-MM-DD HH:mm:ss',
+                minDate: dateToday,
+                maxDate: lastDate,
+            });
+        });
+    </script>
+    <script src="{{asset('js/quiz/create.js')}}"></script>
+@endsection
